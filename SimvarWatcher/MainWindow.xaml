@@ -67,7 +67,7 @@
 
             <Grid Grid.Column="1" Grid.Row="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="48"/>
+                    <RowDefinition Height="48"/> 
                     <RowDefinition Height="10"/>
                     <RowDefinition Height="50"/>
                     <RowDefinition Height="10"/>
@@ -83,6 +83,8 @@
                     <RowDefinition Height="10"/>
                     <RowDefinition Height="50"/>
                     <RowDefinition Height="10"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="10"/> 
                     <RowDefinition Height="25"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
@@ -97,7 +99,7 @@
 
                     <Label Grid.Column="2" Content="Frequency" HorizontalAlignment="Center" VerticalAlignment="Top" Height="25"/>
                     <Slider Grid.Column="2" Margin="0 25 0 0" x:Name="sl_Tick" 
-                            Value="1000" Minimum="100" Maximum="3000" LargeChange="100" SmallChange="10"
+                            Value="1000" Minimum="50" Maximum="2000" LargeChange="100" SmallChange="10"
                             HorizontalAlignment="Center" VerticalAlignment="Top" Width="63" IsDirectionReversed="True" 
                             Thumb.DragCompleted="Slider_DragCompleted" Thumb.DragStarted="Slider_DragStarted" ValueChanged="Slider_ValueChanged"/>
 
@@ -186,10 +188,26 @@
                     <TextBox Grid.Column="0" Grid.Row="1" x:Name="tb_SetValue" PreviewTextInput="NumberValidationTextBox" Text="{Binding sSetValue, Mode=OneWayToSource}"  TextWrapping="Wrap" />
                     <Button Grid.Column="2" Grid.Row="1" x:Name="btn_TrySetValue" Content="Try set value &gt;" Command="{Binding cmdTrySetValue}" IsEnabled="{Binding bConnected}" />
                 </Grid>
+                
+                <Grid Grid.Row="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                <Label Grid.Row="16" Content="Errors" />
+                    <Label Content="Teleplot Port (blank to stop)" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    <!--<TextBox x:Name="tb_TP_Port" HorizontalAlignment="Left" Grid.Row="1" Width="150" TextWrapping="Wrap" Text="" />-->
+                    <TextBox Name="tb_TP_Port" Grid.Row="1" Text="{Binding TeleplotPort, UpdateSourceTrigger=PropertyChanged}"  IsEnabled="{Binding TeleplotPortEnabled}"  />
 
-                <ListBox Grid.Row="17" ItemsSource="{Binding lErrorMessages}">
+                </Grid>
+                <Label Grid.Row="18" Content="Errors" />
+
+                <ListBox Grid.Row="19" ItemsSource="{Binding lErrorMessages}">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Foreground" Value="Red"/>
@@ -201,7 +219,9 @@
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
-            </Grid>
+                
+                
+                  </Grid>
 
 
             <Grid Grid.Column="3" Grid.Row="1">

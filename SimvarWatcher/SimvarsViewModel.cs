@@ -5,6 +5,8 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
+
 
 using Microsoft.FlightSimulator.SimConnect;
 using System.Collections.Generic;
@@ -73,6 +75,18 @@ namespace Simvars
 
     };
 
+    public static class TeleplotBridge
+    {
+        [DllImport("TeleplotBridge.dll")]
+        public static extern void TP_Init(string address, int port);
+
+        [DllImport("TeleplotBridge.dll")]
+        public static extern void TP_Update(string key, double value);
+
+        [DllImport("TeleplotBridge.dll")]
+        public static extern void TP_Shutdown();
+    }
+
     public class SimvarsViewModel : BaseViewModel, IBaseSimConnectWrapper
     {
         #region IBaseSimConnectWrapper implementation
@@ -86,12 +100,26 @@ namespace Simvars
         /// SimConnect object
         private SimConnect m_oSimConnect = null;
 
+        private bool m_bConnected = false;
+
         public bool bConnected
         {
             get { return m_bConnected; }
-            private set { this.SetProperty(ref m_bConnected, value); }
+            private set
+            {
+                if (this.SetProperty(ref m_bConnected, value))
+                {
+                    // Notify UI that the dependent property changed
+                    OnPropertyChanged(nameof(TeleplotPortEnabled));
+                }
+            }
         }
-        private bool m_bConnected = false;
+
+        public bool TeleplotPortEnabled
+        {
+            get => !bConnected;
+        }
+
 
         private uint m_iCurrentDefinition = 0;
         private uint m_iCurrentRequest = 0;
@@ -134,10 +162,23 @@ namespace Simvars
                 oSimvarRequest.bPending = true;
                 oSimvarRequest.bStillPending = true;
             }
+            if (!string.IsNullOrWhiteSpace(TeleplotPort))
+            {
+                try { TeleplotBridge.TP_Shutdown(); } catch { }
+            }
+
         }
         #endregion
 
         #region UI bindings
+
+        public string TeleplotPort
+        {
+            get => m_TeleplotPort;
+            set => this.SetProperty(ref m_TeleplotPort, value);
+        }
+        private string m_TeleplotPort = "";
+
 
         public string sConnectButtonLabel
         {
@@ -415,6 +456,28 @@ namespace Simvars
             sConnectButtonLabel = "Disconnect";
             bConnected = true;
 
+            // --------------------------------------------------------------------
+            // TELEPLOT STARTUP 
+            // --------------------------------------------------------------------
+            if (!string.IsNullOrWhiteSpace(TeleplotPort))
+            {
+                if (int.TryParse(TeleplotPort, out int tpPort))
+                {
+                    try
+                    {
+                        // TeleplotBridge.TP_Init("159.89.12.243", tpPort);
+                        TeleplotBridge.TP_Init("teleplot.fr", tpPort);
+                        Console.WriteLine("Teleplot initialized on port: " + TeleplotPort);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        lErrorMessages.Add("Teleplot init error: " + ex.Message);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------
+
             // Register pending requests
             foreach (SimvarRequest oSimvarRequest in lSimvarRequests)
             {
@@ -474,6 +537,21 @@ namespace Simvars
                         double dValue = (double)data.dwData[0];
                         oSimvarRequest.dValue = dValue;
                         oSimvarRequest.sValue = dValue.ToString("F9");
+                        // --- TELEPLOT SEND ---
+                        if (!string.IsNullOrWhiteSpace(TeleplotPort) &&
+                            int.TryParse(TeleplotPort, out _))
+                        {
+                            try
+                            {
+                                Console.WriteLine("TP SEND: " + oSimvarRequest.sName + " = " + oSimvarRequest.dValue);
+                                TeleplotBridge.TP_Update(oSimvarRequest.sName, oSimvarRequest.dValue);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Teleplot send error: " + ex.Message);
+                            }
+                        }
+
 
                     }
 
@@ -503,6 +581,7 @@ namespace Simvars
                     oSimvarRequest.bStillPending = true;
                 }
             }
+
         }
 
         private void ToggleConnect()
@@ -590,6 +669,7 @@ namespace Simvars
         {
             lSimvarRequests.Remove(oSelectedSimvarRequest);
         }
+
         private void RemoveAllRequest()
         {
             while(lSimvarRequests.Count > 0)
@@ -718,6 +798,7 @@ namespace Simvars
         public void SetTickSliderValue(int _iValue)
         {
             m_oTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)(_iValue));
+            Console.WriteLine("SetTickSliderValue: " + _iValue.ToString());
         }
     }
 }
