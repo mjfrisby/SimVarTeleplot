@@ -445,6 +445,7 @@ namespace Simvars
             catch (COMException ex)
             {
                 Console.WriteLine("Connection to KH failed: " + ex.Message);
+                lErrorMessages.Add("Connection failed. Sim running? " );
             }
         }
 
@@ -544,7 +545,8 @@ namespace Simvars
                             try
                             {
                                 Console.WriteLine("TP SEND: " + oSimvarRequest.sName + " = " + oSimvarRequest.dValue);
-                                TeleplotBridge.TP_Update(oSimvarRequest.sName, oSimvarRequest.dValue);
+                                string tpKey = SanitizeTeleplotKey(oSimvarRequest.sName);
+                                TeleplotBridge.TP_Update(tpKey, oSimvarRequest.dValue);
                             }
                             catch (Exception ex)
                             {
@@ -560,6 +562,19 @@ namespace Simvars
                 }
             }
         }
+
+        private static string SanitizeTeleplotKey(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return name;
+
+            return name
+                .Replace(":", "-")
+                .Replace("|", "-")
+                .Replace(" ", "_");
+        }
+
+
 
         // May not be the best way to achive regular requests.
         // See SimConnect.RequestDataOnSimObject
