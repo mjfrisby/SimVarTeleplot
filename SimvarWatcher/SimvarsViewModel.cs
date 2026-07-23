@@ -408,7 +408,7 @@ namespace Simvars
             lErrorMessages = new ObservableCollection<string>();
 
             cmdToggleConnect = new BaseCommand((p) => { ToggleConnect(); });
-            cmdAddRequest = new BaseCommand((p) => { AddRequest((m_iIndexRequest == 0) ? m_sSimvarRequest : (m_sSimvarRequest + ":" + m_iIndexRequest), sUnitRequest, bIsString); });
+            cmdAddRequest = new BaseCommand((p) => { AddRequest((m_iIndexRequest == 0 || IsLVar(m_sSimvarRequest)) ? m_sSimvarRequest : (m_sSimvarRequest + ":" + m_iIndexRequest), sUnitRequest, bIsString); });
             cmdRemoveSelectedRequest = new BaseCommand((p) => { RemoveSelectedRequest(); });
             cmdRemoveAllRequests = new BaseCommand((p) => { RemoveAllRequest(); });
             cmdCopyNameSelectedRequest = new BaseCommand((p) => { CopySelectedRequest(COPY_ITEM.Name); });
@@ -561,6 +561,11 @@ namespace Simvars
                     oSimvarRequest.bStillPending = false;
                 }
             }
+        }
+
+        private static bool IsLVar(string name)
+        {
+            return !string.IsNullOrEmpty(name) && name.TrimStart().StartsWith("L:", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string SanitizeTeleplotKey(string name)
@@ -759,11 +764,19 @@ namespace Simvars
                 string[] aSubStrings = aLines[i].Split(',');
                 if (aSubStrings.Length >= 2) // format check
                 {
+                    bool bIsString = aSubStrings.Length > 2 && bool.Parse(aSubStrings[2]);
+
+                    // L:vars are arbitrary names not in the simvar/unit lists - accept them as typed.
+                    if (IsLVar(aSubStrings[0]))
+                    {
+                        AddRequest(aSubStrings[0], bIsString ? null : aSubStrings[1], bIsString);
+                        continue;
+                    }
+
                     // values check
                     string[] aSimvarSubStrings = aSubStrings[0].Split(':'); // extract Simvar name from format Simvar:Index
                     string sSimvarName = Array.Find(SimUtils.SimVars.Names, s => s == aSimvarSubStrings[0]);
                     string sUnitName = Array.Find(SimUtils.Units.Names, s => s == aSubStrings[1]);
-                    bool bIsString = aSubStrings.Length > 2 && bool.Parse(aSubStrings[2]);
                     if (sSimvarName != null && (sUnitName != null || bIsString))
                     {
                         AddRequest(aSubStrings[0], sUnitName, bIsString);

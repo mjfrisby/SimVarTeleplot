@@ -114,6 +114,15 @@ namespace Simvars
         {
             if (this.DataContext is SimvarsViewModel oContext)
             {
+                // An L:var is an arbitrary name, not something to filter the A:var list with.
+                // Treat text typed here that starts with "L:" as the request name directly.
+                if (IsLVar(tb_SearchBar.Text))
+                {
+                    oContext.sSimvarRequest = tb_SearchBar.Text.Trim();
+                    this.updateUnits();
+                    return;
+                }
+
                 string[] sSearchInput = (tb_SearchBar.Text.ToUpper()).Split(' ');
 
                 IEnumerable<string> lSimvarsNamesFiltered = new List<string>();
@@ -144,10 +153,33 @@ namespace Simvars
             this.updateUnits();
         }
 
+        private void ComboBox_SimvarNames_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            this.updateUnits();
+        }
+
+        private static bool IsLVar(string sName)
+        {
+            return !string.IsNullOrEmpty(sName) && sName.TrimStart().StartsWith("L:", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void updateUnits(string selectedUnit = "")
         {
             if (this.DataContext is SimvarsViewModel oContext && cbb_UnitNames != null)
             {
+                if (IsLVar(oContext.sSimvarRequest))
+                {
+                    // L:vars are arbitrary names not in the simvar list. Default to a numeric "number"
+                    // unit (SimConnect respects the unit for local vars) and offer every unit.
+                    oContext.aUnitNamesFiltered = oContext.aUnitNames;
+                    if (cbb_UnitNames.SelectedIndex < 0)
+                    {
+                        cbb_UnitNames.SelectedItem = "number";
+                    }
+                    oContext.bIsString = false;
+                    return;
+                }
+
                 int selectedSimVarIndex = Array.IndexOf(oContext.aSimvarNames, oContext.sSimvarRequest);
                 if (selectedSimVarIndex >= 0)
                 {

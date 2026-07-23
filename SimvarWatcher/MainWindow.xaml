@@ -140,9 +140,14 @@
                     <ComboBox Grid.Column="2" Grid.Row="1" x:Name="cbb_ObjectIds" ItemsSource="{Binding lObjectIDs}" SelectedValue="{Binding iObjectIdRequest, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding bObjectIDSelectionEnabled}" SelectedIndex="0" />
                 </Grid>
 
-                <Label Grid.Row="4" Content="Simvar Name" HorizontalAlignment="Left" />
+                <Label Grid.Row="4" Content="Simvar Name (type L:name for local vars)" HorizontalAlignment="Left" />
                 <TextBox Grid.Row="6" x:Name="tb_SearchBar"  SelectionChanged="TextBox_SearchBar_SelectionChanged"/>
-                <ComboBox Grid.Row="8" x:Name="cbb_SimvarNames" ItemsSource="{Binding Source={StaticResource AlphaSortedSimvarNames}}" SelectedValue="{Binding sSimvarRequest, Mode=OneWayToSource}" SelectedIndex="0" SelectionChanged="ComboBox_SimvarNames_SelectionChanged"/>
+                <ComboBox Grid.Row="8" x:Name="cbb_SimvarNames" IsEditable="True" IsTextSearchEnabled="False"
+                          ToolTip="Pick a simulation variable, or type an L:var name (e.g. L:MY_LOCAL_VAR) directly."
+                          ItemsSource="{Binding Source={StaticResource AlphaSortedSimvarNames}}"
+                          Text="{Binding sSimvarRequest, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedIndex="0" SelectionChanged="ComboBox_SimvarNames_SelectionChanged"
+                          TextBoxBase.TextChanged="ComboBox_SimvarNames_TextChanged"/>
 
                 <Grid Grid.Row="10">
                     <Grid.ColumnDefinitions>
